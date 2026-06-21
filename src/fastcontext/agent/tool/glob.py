@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -6,16 +7,17 @@ from .tool import Tool
 
 
 def run(directory: str, pattern: str, cwd: str) -> str:
-    command = ["rg", "--files", directory, "--glob", pattern]
+    rg = shutil.which("rg") or "rg"
+    command = [rg, "--files", directory, "--glob", pattern]
     timeout = 10  # seconds
     try:
-        output = subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+        output = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
     except subprocess.TimeoutExpired:
         return f"Tool `Glob` timed out after {timeout}s."
     if output.returncode == 0:
-        return output.stdout if isinstance(output.stdout, str) else output.stdout.decode("utf-8")
+        return output.stdout if isinstance(output.stdout, str) else output.stdout.decode("utf-8", errors="replace")
     else:
-        return output.stderr if isinstance(output.stderr, str) else output.stderr.decode("utf-8")
+        return output.stderr if isinstance(output.stderr, str) else output.stderr.decode("utf-8", errors="replace")
 
 
 class GlobTool(Tool):

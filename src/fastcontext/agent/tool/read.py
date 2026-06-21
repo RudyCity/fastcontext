@@ -43,7 +43,7 @@ class ReadTool(Tool):
         if not Path(file_path).exists():
             return f"Read Tool: file {file_path} does not exist."
 
-        async with aiofiles.open(file_path, mode="r") as f:
+        async with aiofiles.open(file_path, mode="r", encoding="utf-8", errors="replace") as f:
             raw_lines = await f.readlines()
 
         if len(raw_lines) == 0:
