@@ -7,13 +7,23 @@ from .tool import Tool
 
 
 def run(directory: str, pattern: str, cwd: str) -> str:
-    rg = shutil.which("rg") or "rg"
+    rg = shutil.which("rg")
+    if not rg:
+        return (
+            "Glob tool requires ripgrep (rg) to be installed, but it was not found in PATH.\n"
+            "Install it from: https://github.com/BurntSushi/ripgrep#installation"
+        )
     command = [rg, "--files", directory, "--glob", pattern]
     timeout = 10  # seconds
     try:
         output = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
     except subprocess.TimeoutExpired:
         return f"Tool `Glob` timed out after {timeout}s."
+    except FileNotFoundError:
+        return (
+            "Glob tool requires ripgrep (rg) to be installed, but it was not found.\n"
+            "Install it from: https://github.com/BurntSushi/ripgrep#installation"
+        )
     if output.returncode == 0:
         return output.stdout if isinstance(output.stdout, str) else output.stdout.decode("utf-8", errors="replace")
     else:
@@ -39,7 +49,7 @@ class GlobTool(Tool):
     }
 
     async def call(self, parameters: str, **kwargs) -> str:
-        cwd = kwargs.get("cwd", Path.cwd().as_posix())
+        cwd = kwargs.get("cwd", str(Path.cwd()))
         params: dict = json.loads(parameters)
         directory = params.get("directory", cwd)
         pattern = params.get("pattern")
